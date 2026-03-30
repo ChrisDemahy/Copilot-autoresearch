@@ -1,33 +1,18 @@
-import express from "express";
-import { agentHandler } from "./agent.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
-const PORT = parseInt(process.env.PORT ?? "3000", 10);
+import { ExperimentManager } from "./experiment.js";
+import { registerTools } from "./tools.js";
 
-const app = express();
+const manager = new ExperimentManager();
+await manager.loadFromDisk();
 
-// Raw body middleware — needed for signature verification.
-// We parse as text so the raw string is available for HMAC checks,
-// then also expose the parsed JSON on req.body for convenience.
-app.use(
-  express.text({ type: "application/json", limit: "1mb" }),
-);
-
-// Health check
-app.get("/", (_req, res) => {
-  res.json({
-    name: "copilot-autoresearch",
-    version: "1.0.0",
-    status: "ok",
-    description:
-      "Autonomous experiment loop — GitHub Copilot Extension",
-  });
+const server = new McpServer({
+  name: "autoresearch",
+  version: "1.0.0",
 });
 
-// Copilot agent endpoint
-app.post("/agent", agentHandler);
+registerTools(server, manager);
 
-app.listen(PORT, () => {
-  console.log(`copilot-autoresearch listening on http://localhost:${PORT}`);
-  console.log(`  POST /agent  — Copilot agent endpoint`);
-  console.log(`  GET  /       — health check`);
-});
+const transport = new StdioServerTransport();
+await server.connect(transport);

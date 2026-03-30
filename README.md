@@ -7,7 +7,7 @@ This repository contains two implementations of the autoresearch concept:
 | Package | Platform | Description |
 |---------|----------|-------------|
 | [`pi-autoresearch`](./pi-autoresearch/) | [Pi](https://github.com/mariozechner/pi) AI coding agent | Extension + skills for Pi's terminal-based agent |
-| [`copilot-autoresearch`](./copilot-autoresearch/) | GitHub Copilot Extension | Express server using the `@copilot-extensions/preview-sdk` |
+| [`copilot-autoresearch`](./copilot-autoresearch/) | [Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli) plugin | Agent, skills, and MCP tools for GitHub Copilot CLI |
 
 Both share the same core workflow:
 

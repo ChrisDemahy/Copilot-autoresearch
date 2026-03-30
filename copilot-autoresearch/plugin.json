@@ -1,0 +1,13 @@
+{
+  "name": "copilot-autoresearch",
+  "description": "Autonomous experiment loop — run, measure, keep or discard. Optimizes any metric via a benchmark loop with MAD-based confidence scoring.",
+  "version": "1.0.0",
+  "author": {
+    "name": "ChrisDemahy"
+  },
+  "license": "MIT",
+  "keywords": ["autoresearch", "optimization", "benchmarking", "experiment"],
+  "agents": "agents/",
+  "skills": "skills/",
+  "mcpServers": ".mcp.json"
+}

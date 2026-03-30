@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "autoresearch": {
+      "command": "node",
+      "args": ["dist/index.js"]
+    }
+  }
+}

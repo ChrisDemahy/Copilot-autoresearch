@@ -107,14 +107,6 @@ export interface RunDetails {
   metricUnit: string;
 }
 
-/** Represents a single tool invocation requested by the LLM. */
-export interface ToolCall {
-  /** Tool function name (init_experiment, run_experiment, log_experiment). */
-  name: string;
-  /** JSON-decoded parameters for the tool. */
-  parameters: Record<string, unknown>;
-}
-
 /** Shape of autoresearch.config.json. */
 export interface AutoresearchConfig {
   /** Maximum iterations before auto-stopping. */
