@@ -1,15 +1,14 @@
 # copilot-autoresearch
 
-Autonomous experiment loop as a **GitHub Copilot Extension** — run, measure, keep or discard.
+Autonomous experiment loop as a **Copilot CLI plugin** — run, measure, keep or discard.
 
 ## What is this?
 
-`copilot-autoresearch` brings the autonomous optimization loop from [pi-autoresearch](../pi-autoresearch/) into the GitHub Copilot ecosystem. It provides a Copilot chat agent (`@copilot-autoresearch`) that helps you:
+`copilot-autoresearch` brings the autonomous optimization loop from [pi-autoresearch](../pi-autoresearch/) into the GitHub Copilot CLI ecosystem. It provides:
 
-1. **Define** an optimization target (metric name, direction)
-2. **Run** a benchmark command and parse `METRIC name=value` lines from its output
-3. **Decide** whether to keep or discard each iteration's changes
-4. **Track** progress with MAD-based confidence scoring and JSONL persistence
+- A **custom agent** (`autoresearch`) that manages the experiment loop
+- **Skills** for setting up (`autoresearch-create`) and finalizing (`autoresearch-finalize`) sessions
+- **MCP tools** (`init_experiment`, `run_experiment`, `log_experiment`) for the experiment lifecycle
 
 The experiment loop runs autonomously: edit code → run benchmark → keep/discard → repeat.
 
@@ -17,28 +16,33 @@ The experiment loop runs autonomously: edit code → run benchmark → keep/disc
 
 | | pi-autoresearch | copilot-autoresearch |
 |---|---|---|
-| **Platform** | Pi AI coding agent extension | GitHub Copilot Extension |
-| **Language** | TypeScript (Pi SDK) | TypeScript (Express + Copilot SDK) |
-| **Interface** | Pi chat + dashboard widget | GitHub Copilot Chat (SSE) |
+| **Platform** | Pi AI coding agent extension | Copilot CLI plugin |
+| **Language** | TypeScript (Pi SDK) | TypeScript (MCP SDK) |
+| **Interface** | Pi chat + dashboard widget | Copilot CLI agent + skills |
 | **State** | JSONL + in-memory runtime | JSONL + in-memory manager |
 | **Core loop** | Same | Same |
 
-## Architecture
+## Plugin structure
 
 ```
-src/
-├── index.ts          Express server (POST /agent, GET /)
-├── agent.ts          SSE handler — parses messages, dispatches tools, streams responses
-├── tools.ts          Tool definitions (JSON Schema) + dispatch logic
-├── experiment.ts     ExperimentManager — state, persistence, confidence scoring
-└── types.ts          TypeScript interfaces
-```
-
-### Data flow
-
-```
-Copilot Chat ──POST /agent──▶ agent.ts ──tool call──▶ tools.ts ──▶ experiment.ts
-                  ◀──SSE stream────────────────────────────────────────┘
+copilot-autoresearch/
+├── plugin.json           Plugin manifest
+├── .mcp.json             MCP server configuration
+├── agents/
+│   └── autoresearch.agent.md   Custom agent with loop instructions
+├── skills/
+│   ├── autoresearch-create/
+│   │   └── SKILL.md            Setup and loop instructions
+│   └── autoresearch-finalize/
+│       ├── SKILL.md            Group and branch finalization guide
+│       └── finalize.sh         Shell script for creating independent branches
+├── src/
+│   ├── index.ts          MCP stdio server entry point
+│   ├── tools.ts          MCP tool registration
+│   ├── experiment.ts     ExperimentManager — state, persistence, confidence scoring
+│   └── types.ts          TypeScript interfaces
+└── tests/
+    └── finalize_test.sh  Test suite for finalize.sh
 ```
 
 ## Available tools
@@ -59,59 +63,56 @@ METRIC compile_µs=4200
 METRIC render_µs=9800
 ```
 
-The agent parses these to extract measurements automatically.
+The MCP server parses these to extract measurements automatically.
 
 ## Setup
 
 ### Prerequisites
 
 - Node.js 20+
-- A GitHub App configured as a Copilot Extension
+- [Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli)
 
-### Create the GitHub App
-
-1. Go to **Settings → Developer settings → GitHub Apps → New GitHub App**
-2. Set the **Callback URL** to your server's `/agent` endpoint
-3. Under **Copilot**, enable the extension and set the endpoint to `https://your-server/agent`
-4. Install the app on your account/organization
-
-### Environment variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | HTTP server port | `3000` |
-| `GITHUB_TOKEN` | Token for signature verification | _(skip verification)_ |
-
-## Running locally
+### Build the MCP server
 
 ```bash
-# Install dependencies
+cd copilot-autoresearch
 npm install
-
-# Build
 npm run build
-
-# Start the server
-npm start
-
-# Or run in development mode (ts-node)
-npm run dev
 ```
 
-The server listens on `http://localhost:3000` by default.
-
-### Testing the health check
+### Install as a Copilot CLI plugin
 
 ```bash
-curl http://localhost:3000/
+# From the repository root
+copilot plugin install ./copilot-autoresearch
+
+# Verify installation
+copilot plugin list
 ```
 
-### Sending a test message
+### Usage
+
+Start a Copilot CLI session and use the autoresearch agent or skills:
 
 ```bash
-curl -X POST http://localhost:3000/agent \
-  -H "Content-Type: application/json" \
-  -d '{"messages":[{"role":"user","content":"I want to optimize my build time"}]}'
+# Start an interactive session
+copilot
+
+# Use the autoresearch agent
+/agent autoresearch
+
+# Or invoke the setup skill directly
+/skills autoresearch-create
+```
+
+The agent will guide you through:
+1. Defining an optimization target
+2. Creating benchmark scripts
+3. Running the autonomous experiment loop
+
+To finalize results into clean branches:
+```
+/skills autoresearch-finalize
 ```
 
 ## Confidence scoring
